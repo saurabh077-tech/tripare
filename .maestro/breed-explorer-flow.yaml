@@ -1,0 +1,24 @@
+appId: com.tripare
+name: Breed explorer critical flow
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Breed Explorer"
+    timeout: 30000
+- assertVisible:
+    id: "search-input"
+- tapOn:
+    id: "search-input"
+- inputText: "Poodle"
+- tapOn: "Poodle"
+- extendedWaitUntil:
+    visible: "Overview"
+    timeout: 15000
+- tapOn:
+    id: "tab-traits"
+- assertVisible: "Trait scores"
+- tapOn:
+    id: "tab-gallery"
+- tapOn:
+    id: "back-button"
+- assertVisible: "Breed Explorer"

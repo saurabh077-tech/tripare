@@ -13,12 +13,31 @@ const BreedRow = ({ breed, onPress }: Props) => {
   const size = sizeBandForBreed(breed)
   const otherNames = (breed.attributes.other_names ?? []).slice(0, 2).join(' · ')
 
+  const a11yLabel = [
+    breed.attributes.name,
+    otherNames ? `also known as ${otherNames}` : null,
+    size ? titleCase(size) : null,
+    breed.attributes.hypoallergenic ? 'hypoallergenic' : null,
+  ]
+    .filter(Boolean)
+    .join(', ')
+
   return (
     <Pressable
       onPress={() => onPress(breed.id)}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      testID={`breed-row-${breed.id}`}
+      accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
+      accessibilityHint="Opens breed details">
       {thumb ? (
-        <Image source={{ uri: thumb }} style={styles.thumb} />
+        <Image
+          source={{ uri: thumb }}
+          style={styles.thumb}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={`${breed.attributes.name} thumbnail`}
+        />
       ) : (
         <View style={[styles.thumb, styles.thumbFallback]}>
           <Text style={styles.thumbLetter}>

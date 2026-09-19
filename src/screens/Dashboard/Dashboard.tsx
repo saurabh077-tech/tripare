@@ -99,20 +99,36 @@ const Dashboard = ({ navigation }: RootScreenProps<Paths.Dashboard>) => {
   const showPartialBanner = Boolean(data?.partialError) || (Boolean(error) && breeds.length > 0)
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Breed Explorer</Text>
-        <Text style={styles.sync}>{formatLastSynced(fulfilledTimeStamp)}</Text>
+    <View
+      style={[styles.screen, { paddingTop: insets.top }]}
+      accessibilityLabel="Breed explorer dashboard"
+      testID="dashboard-screen">
+      <View style={styles.header} accessible accessibilityRole="header">
+        <Text accessibilityRole="header" style={styles.title}>
+          Breed Explorer
+        </Text>
+        <Text
+          style={styles.sync}
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={formatLastSynced(fulfilledTimeStamp)}>
+          {formatLastSynced(fulfilledTimeStamp)}
+        </Text>
       </View>
 
       {isOffline ? (
-        <View style={styles.banner}>
+        <View
+          style={styles.banner}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="assertive">
           <Text style={styles.bannerText}>Offline — showing cached breeds</Text>
         </View>
       ) : null}
 
       {showPartialBanner ? (
-        <View style={[styles.banner, styles.bannerWarn]}>
+        <View
+          style={[styles.banner, styles.bannerWarn]}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite">
           <Text style={styles.bannerText}>
             Some pages failed to sync. Showing cached data.
           </Text>
@@ -128,23 +144,40 @@ const Dashboard = ({ navigation }: RootScreenProps<Paths.Dashboard>) => {
           autoCorrect={false}
           autoCapitalize="none"
           style={styles.search}
+          testID="search-input"
+          accessibilityRole="search"
+          accessibilityLabel="Search breed name or other names"
         />
       </View>
 
       <View style={styles.filterBar}>
         <Pressable
           onPress={() => setFiltersOpen(open => !open)}
-          style={styles.filterButton}>
+          style={styles.filterButton}
+          testID="filters-button"
+          accessibilityRole="button"
+          accessibilityState={{ expanded: filtersOpen }}
+          accessibilityLabel={
+            filterCount ? `Filters, ${filterCount} active` : 'Filters'
+          }>
           <Text style={styles.filterButtonText}>
             Filters{filterCount ? ` (${filterCount})` : ''}
           </Text>
         </Pressable>
         {filterCount ? (
-          <Pressable onPress={() => setFilters(EMPTY_FILTERS)}>
+          <Pressable
+            onPress={() => setFilters(EMPTY_FILTERS)}
+            testID="clear-filters"
+            accessibilityRole="button"
+            accessibilityLabel="Clear all filters">
             <Text style={styles.clear}>Clear</Text>
           </Pressable>
         ) : null}
-        <Text style={styles.count}>{totalVisible} breeds</Text>
+        <Text
+          style={styles.count}
+          accessibilityLabel={`${totalVisible} breeds showing`}>
+          {totalVisible} breeds
+        </Text>
       </View>
 
       {filtersOpen ? (
@@ -159,17 +192,27 @@ const Dashboard = ({ navigation }: RootScreenProps<Paths.Dashboard>) => {
       ) : showCachedError ? (
         <View style={styles.centered}>
           <Text style={styles.muted}>Could not load breeds.</Text>
-          <Pressable onPress={onRefresh} style={styles.retry}>
+          <Pressable
+            onPress={onRefresh}
+            style={styles.retry}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading breeds">
             <Text style={styles.retryText}>Retry</Text>
           </Pressable>
         </View>
       ) : (
         <SectionList
+          testID="breed-list"
+          accessibilityLabel="Breed list grouped by breed group"
           sections={sections}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
+            <View
+              style={styles.sectionHeader}
+              accessible
+              accessibilityRole="header"
+              accessibilityLabel={`${section.title}, ${section.data.length} breeds`}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Text style={styles.sectionCount}>{section.data.length}</Text>
             </View>

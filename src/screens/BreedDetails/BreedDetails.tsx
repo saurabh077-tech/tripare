@@ -69,21 +69,31 @@ const SectionCard = ({
   title: string
   children: React.ReactNode
 }) => (
-  <View style={styles.card}>
-    <Text style={styles.cardTitle}>{title}</Text>
+  <View
+    style={styles.card}
+    accessible={false}
+    accessibilityLabel={`${title} section`}>
+    <Text accessibilityRole="header" style={styles.cardTitle}>
+      {title}
+    </Text>
     {children}
   </View>
 )
 
 const FactRow = ({ label, value }: { label: string; value?: string }) => (
-  <View style={styles.factRow}>
+  <View
+    style={styles.factRow}
+    accessible
+    accessibilityLabel={`${label}, ${value || 'not listed'}`}>
     <Text style={styles.factLabel}>{label}</Text>
     <Text style={styles.factValue}>{value || '—'}</Text>
   </View>
 )
 
 const Chip = ({ label }: { label: string }) => (
-  <Text style={styles.chip}>{label}</Text>
+  <Text accessibilityRole="text" style={styles.chip}>
+    {label}
+  </Text>
 )
 
 const TraitScale = ({
@@ -100,9 +110,22 @@ const TraitScale = ({
   const safeValue = typeof value === 'number' ? value : 0
   const ratio = Math.max(0, Math.min(safeValue / max, 1))
   const ticks = max <= 5 ? max : 5
+  const scoreText =
+    typeof value === 'number'
+      ? `${value}${unit ? ` ${unit}` : ''}${max === 5 ? ` of ${max}` : ''}`
+      : 'not listed'
 
   return (
-    <View style={styles.traitBlock}>
+    <View
+      style={styles.traitBlock}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={`${label}, ${scoreText}`}
+      accessibilityValue={{
+        min: 0,
+        max,
+        now: typeof value === 'number' ? value : 0,
+      }}>
       <View style={styles.traitHeader}>
         <Text style={styles.traitLabel}>{label}</Text>
         <Text style={styles.traitScore}>
@@ -136,13 +159,28 @@ const GallerySlide = ({
         source={{ uri: image.large || image.medium || image.url }}
         style={[styles.galleryImage, { width }]}
         resizeMode="cover"
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={
+          attribution?.author
+            ? `Breed photo by ${attribution.author}`
+            : 'Breed photo'
+        }
       />
-      <View style={styles.creditCard}>
+      <View
+        style={styles.creditCard}
+        accessible={false}
+        accessibilityLabel="Image attribution">
         <Text style={styles.creditHeading}>Attribution</Text>
         <FactRow label="Author" value={attribution?.author} />
         <Pressable
           disabled={!attribution?.license_url}
-          onPress={() => openUrl(attribution?.license_url)}>
+          onPress={() => openUrl(attribution?.license_url)}
+          accessibilityRole="link"
+          accessibilityLabel={`License, ${attribution?.license || 'not listed'}`}
+          accessibilityHint={
+            attribution?.license_url ? 'Opens license in browser' : undefined
+          }>
           <FactRow
             label="License"
             value={
@@ -156,7 +194,12 @@ const GallerySlide = ({
         </Pressable>
         <Pressable
           disabled={!attribution?.source_url}
-          onPress={() => openUrl(attribution?.source_url)}>
+          onPress={() => openUrl(attribution?.source_url)}
+          accessibilityRole="link"
+          accessibilityLabel={`Source, ${attribution?.source || 'not listed'}`}
+          accessibilityHint={
+            attribution?.source_url ? 'Opens source in browser' : undefined
+          }>
           <FactRow
             label="Source"
             value={
@@ -244,23 +287,41 @@ const BreedDetails = ({ navigation, route }: RootScreenProps<Paths.BreedDetails>
   }
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View
+      style={[styles.screen, { paddingTop: insets.top }]}
+      accessibilityLabel={`${breed.attributes.name} details`}
+      testID="breed-details-screen">
       <View style={styles.nav}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          hitSlop={12}
+          testID="back-button"
+          accessibilityRole="button"
+          accessibilityLabel="Back to breed list">
           <Text style={styles.back}>Back</Text>
         </Pressable>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text
+          style={styles.title}
+          numberOfLines={1}
+          accessibilityRole="header">
           {breed.attributes.name}
         </Text>
         <View style={styles.navSpacer} />
       </View>
 
-      <View style={styles.tabs}>
+      <View
+        style={styles.tabs}
+        accessibilityRole="tablist"
+        accessibilityLabel="Breed detail sections">
         {TABS.map(item => (
           <Pressable
             key={item.key}
             onPress={() => setTab(item.key)}
-            style={[styles.tab, tab === item.key && styles.tabActive]}>
+            style={[styles.tab, tab === item.key && styles.tabActive]}
+            testID={`tab-${item.key}`}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === item.key }}
+            accessibilityLabel={item.label}>
             <Text style={[styles.tabLabel, tab === item.key && styles.tabLabelActive]}>
               {item.label}
             </Text>
@@ -382,7 +443,10 @@ const BreedDetails = ({ navigation, route }: RootScreenProps<Paths.BreedDetails>
               })}
               renderItem={({ item }) => <GallerySlide image={item} width={width} />}
             />
-            <Text style={[styles.pager, { paddingBottom: insets.bottom + 8 }]}>
+            <Text
+              style={[styles.pager, { paddingBottom: insets.bottom + 8 }]}
+              accessibilityLiveRegion="polite"
+              accessibilityLabel={`Photo ${galleryIndex + 1} of ${images.length}`}>
               {galleryIndex + 1} / {images.length}
             </Text>
           </View>

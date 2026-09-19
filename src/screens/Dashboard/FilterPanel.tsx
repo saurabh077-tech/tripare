@@ -29,7 +29,10 @@ const Chip = ({
 }) => (
   <Pressable
     onPress={onPress}
-    style={[styles.chip, selected && styles.chipSelected]}>
+    style={[styles.chip, selected && styles.chipSelected]}
+    accessibilityRole="button"
+    accessibilityState={{ selected }}
+    accessibilityLabel={`${label}${selected ? ', selected' : ''}`}>
     <Text style={[styles.chipLabel, selected && styles.chipLabelSelected]}>
       {label}
     </Text>
@@ -38,8 +41,11 @@ const Chip = ({
 
 const FilterPanel = ({ groups, filters, onChange }: Props) => {
   return (
-    <View style={styles.panel}>
-      <Text style={styles.section}>Breed group</Text>
+    <View
+      style={styles.panel}
+      accessibilityLabel="Breed filters"
+      testID="filter-panel">
+      <Text accessibilityRole="header" style={styles.section}>Breed group</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {groups.map(group => (
           <Chip
@@ -56,7 +62,7 @@ const FilterPanel = ({ groups, filters, onChange }: Props) => {
         ))}
       </ScrollView>
 
-      <Text style={styles.section}>Size</Text>
+      <Text accessibilityRole="header" style={styles.section}>Size</Text>
       <View style={styles.wrap}>
         {SIZE_BANDS.map(size => (
           <Chip
@@ -73,7 +79,7 @@ const FilterPanel = ({ groups, filters, onChange }: Props) => {
         ))}
       </View>
 
-      <Text style={styles.section}>Coat length</Text>
+      <Text accessibilityRole="header" style={styles.section}>Coat length</Text>
       <View style={styles.wrap}>
         {COAT_LENGTHS.map(coat => (
           <Chip
@@ -90,7 +96,7 @@ const FilterPanel = ({ groups, filters, onChange }: Props) => {
         ))}
       </View>
 
-      <Text style={styles.section}>Hypoallergenic</Text>
+      <Text accessibilityRole="header" style={styles.section}>Hypoallergenic</Text>
       <View style={styles.wrap}>
         {(['yes', 'no'] as const).map(value => (
           <Chip
@@ -107,7 +113,7 @@ const FilterPanel = ({ groups, filters, onChange }: Props) => {
         ))}
       </View>
 
-      <Text style={styles.section}>Trait threshold</Text>
+      <Text accessibilityRole="header" style={styles.section}>Trait threshold</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {TRAIT_OPTIONS.map(option => (
           <Chip
