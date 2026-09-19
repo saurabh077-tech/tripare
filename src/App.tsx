@@ -4,7 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {  useState } from 'react';
 import { Provider } from 'react-redux';
 import ApplicationNavigator from './navigation/Application';
-import { store } from './store';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor, store } from './store';
 
 // export const storage = new createAsyncStorage();
 
@@ -17,11 +18,13 @@ function App() {
 
   return (
     <Provider store={store}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-            <ApplicationNavigator
-              isAuthenticated={isAuthenticated}
-            />
-      </GestureHandlerRootView>
+      <PersistGate loading={null} persistor={persistor}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+              <ApplicationNavigator
+                isAuthenticated={isAuthenticated}
+              />
+        </GestureHandlerRootView>
+      </PersistGate>
     </Provider>
   );
 }

@@ -7,4 +7,6 @@ export type RootScreenProps<
 
 export type RootStackParamList = {
   [Paths.Example]: undefined;
+  [Paths.Dashboard]: undefined;
+  [Paths.BreedDetails]: { id: string };
 };

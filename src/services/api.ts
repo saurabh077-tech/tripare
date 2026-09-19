@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   BaseQueryFn,
   createApi,
@@ -16,36 +15,23 @@ const baseQueryWithInterceptor: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
+  
   /**
-   * Brand Url which i am setting in Login Submit Function
-   */
-  const brandUrl = await AsyncStorage.getItem('brandUrl')
-  const user = await AsyncStorage.getItem('user')
-
-  // console.log('brnad', brandUrl, user)
-  /**
-   * If Brand Url Exists then set the brand url or else use the campus url
    * Base Url which is used for the Base queries
    */
   const baseQuery = fetchBaseQuery({
-    // baseUrl: brandUrl ? brandUrl + 'api/Webservice/' : Config.CAMPUS_API_URL,
-    // baseUrl: brandUrl
-    //   ? 'https://newui.campus365.io/' + 'api/Webservice/'
-    //   : Config.CAMPUS_API_URL,
+    baseUrl: "https://dogapi.dog/api/v2",
+  
     prepareHeaders: headers => {
       // console.log('getState', (getState() as RootState).brand.user.token)
-      headers.set('auth-key', 'schoolAdmin@')
-      headers.set('client-service', 'smartschool')
-      console.log('headers', headers)
+      
 
       return headers
     },
   })
   let result = await baseQuery(args, api, extraOptions)
   const uniqueLogId = Math.floor(Math.random() * 90000) + 10000 + ''
-  console.debug('---------------------', uniqueLogId)
-  console.debug('apiRequest: ', args)
-  console.debug('apiResult:', result)
+
   //console.debug('apiResult:', JSON.stringify(result, null, 2));
   if (result.error && result.error.status === 401) {
     console.warn('401 Status in API')
@@ -55,6 +41,10 @@ const baseQueryWithInterceptor: BaseQueryFn<
 }
 
 export const api = createApi({
+  reducerPath: 'api',
   baseQuery: baseQueryWithInterceptor,
+  keepUnusedDataFor: 60 * 60 * 24,
+  refetchOnReconnect: true,
+  refetchOnFocus: true,
   endpoints: () => ({}),
 })

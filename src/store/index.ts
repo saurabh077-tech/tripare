@@ -13,9 +13,10 @@ import {
 import { configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 import { api } from '../services/api'
+import '../services/modules/dogbreed'
 
 const reducers = combineReducers({
-
+  [api.reducerPath]: api.reducer,
 })
 
 export type IState = ReturnType<typeof reducers>
@@ -23,9 +24,7 @@ export type IState = ReturnType<typeof reducers>
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: [
-   
-  ],
+  whitelist: [api.reducerPath],
 }
 
 const persistedReducer = persistReducer(persistConfig, reducers)

@@ -4,11 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Paths } from './paths';
 import { RootStackParamList } from './types';
-import { Example } from '../screens';
-
-
-
-
+import { BreedDetails, Dashboard } from '../screens';
 
 const Stack = createStackNavigator<RootStackParamList>();
 type Props = {
@@ -22,7 +18,8 @@ function ApplicationNavigator({ isAuthenticated }: Props) {
     <SafeAreaProvider>
       <NavigationContainer >
        <Stack.Navigator  screenOptions={{ headerShown: false }}>
-       <Stack.Screen component={Example} name={Paths.Example} />
+       <Stack.Screen component={Dashboard} name={Paths.Dashboard} />
+       <Stack.Screen component={BreedDetails} name={Paths.BreedDetails} />
             
         </Stack.Navigator>
       </NavigationContainer>
