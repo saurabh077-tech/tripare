@@ -1,97 +1,92 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Tripare — Breed Explorer
 
-# Getting Started
+A React Native app for browsing, searching, and filtering 283 dog breeds. It presents breed profiles with an overview, trait scores, and image gallery, while retaining cached data for useful offline behavior.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+The app gets its data from the public Dog API through RTK Query. The dashboard fetches the paginated breed catalogue in small concurrent windows, derives search/filter/grouped-list views locally, and opens individual profiles from the same cached catalogue before requesting their full detail. Redux Persist writes the RTK Query cache to AsyncStorage, so the last successful catalogue is available immediately after a restart.
 
-## Step 1: Start Metro
+Connectivity is treated as a first-class UI state: NetInfo drives the offline banner, cached results remain readable when the network is unavailable, and RTK Query refreshes active data when the app regains focus or a connection. The result is a responsive catalogue for normal browsing without assuming a network is always present.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Quick Start
 
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+Prerequisites: Node.js 22.11+ and a configured React Native iOS or Android environment.
 
 ```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+npm install
+cp .env.example .env
+npm run ios  # or npm run android
 ```
 
-### iOS
+On a machine with the native toolchain already set up, this should be running in under three minutes. The first iOS build may additionally require CocoaPods installation in `ios/`.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## Architecture Overview
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+Tripare keeps server state separate from UI state. RTK Query owns requests, normalization-by-cache-key, loading/error state, cache lifetime, and reconnect/focus refresh behavior. The screens use its generated hooks, while lightweight screen-local React state handles search input, the 300 ms debounce, selected filters, and filter-panel visibility.
+
+The persisted cache is the boundary between online and offline use. Breed and group responses flow from the API into RTK Query, then are stored through Redux Persist in AsyncStorage. Screens render that cached data immediately; a successful reconnect safely replaces it with fresh responses. `SectionList` receives memoized, grouped results, keeping the full breed catalogue practical to render.
+
+```mermaid
+flowchart LR
+  A[Dog API] --> B[RTK Query API slice]
+  B --> C[Redux Persist]
+  C <--> D[AsyncStorage cache]
+  B --> E[Dashboard & detail hooks]
+  D --> E
+  F[NetInfo] --> G[Offline banner / reconnect]
+  G --> B
+  E --> H[React Native UI]
+```
+
+**Data flow:** API → RTK Query cache → persisted AsyncStorage → React Native UI.
+
+## Key Technical Decisions
+
+| Decision | Choice | Why |
+| --- | --- | --- |
+| State management | Redux Toolkit + RTK Query | Server state is co-located with fetching, cache status, invalidation-ready endpoints, and generated hooks. It avoids custom request bookkeeping while leaving transient input/filter state local to each screen. |
+| Local database | AsyncStorage via Redux Persist | The catalogue is modest in size and key/value persistence is sufficient. It is reliable across restarts, has no schema/migration overhead, and works naturally with the Redux cache. A relational database would add complexity without a demonstrated query need. |
+| Offline sync | Persist cache; detect connectivity with NetInfo; refetch on reconnect/focus | Cached breeds stay visible offline. A visible offline/partial-data state makes freshness explicit, while reconnect and focus refreshes reconcile the cache with the API. The all-breeds request fetches pages in two-page windows and preserves successful pages when a later page fails. |
+
+## Performance Report
+
+Measurements below are from the supplied Android Studio / React DevTools captures using the full 283-breed catalogue. They are useful baseline evidence, not release-device benchmarks.
+
+| Area | Result | Evidence / interpretation |
+| --- | --- | --- |
+| Full-list React commit | 36 ms render; 0.9 ms layout effects; 2.7 ms passive effects | React DevTools Profiler capture of the 283-breed list. The selected commit is over one 60 Hz frame, so it is a baseline to monitor rather than a claim that every full-list update is frame-perfect. |
+| Native allocations | 24,716,296 B allocated; 13,008,092 B remaining | Android Studio Native Allocations capture. |
+| JavaScript heap | 41.4 MB snapshot | React DevTools Memory capture. Breed objects account for about 2.36 MB retained; image metadata about 1.61 MB. |
+| Interaction FPS | Not directly sampled in the supplied trace | A performance trace is included below, but it does not show an FPS counter. Validate a release build with Android Studio/JankStats or Xcode Instruments before setting an FPS target. |
+| Bundle size | Not captured | No release APK/IPA or Metro bundle artifact was supplied, so a trustworthy JS/native breakdown cannot be reported without fabricating a value. Generate a release artifact and record APK/IPA, JS, assets, and native-library sizes here. |
+
+### Profiler evidence — full catalogue render
+
+![React DevTools ranked profiler view: selected commit rendered in 36 ms with 0.9 ms layout and 2.7 ms passive effects.](docs/screenshots/profiler-ranked.png)
+
+### Memory evidence
+
+![Android Studio Native Allocations profiler for the breed explorer.](docs/screenshots/memory-native.png)
+
+### Interaction trace
+
+![React DevTools performance trace used to inspect list interactions.](docs/screenshots/performance-trace.png)
+
+> The three diagnostic screenshots above are referenced as supplied performance evidence. Add the original files at the named paths when publishing this repository if they are not present in your clone.
+
+## Screenshots
+
+| Breed catalogue | Filtered search |
+| --- | --- |
+| ![Breed list showing the 283-breed catalogue.](docs/screenshots/Screenshot_1789795664.png) | ![Search narrowed to the Stabyhoun breed.](docs/screenshots/Screenshot_1789795688.png) |
+| Breed details — overview | Breed details — traits |
+| ![Shikoku overview with description, life span, dimensions, and origin.](docs/screenshots/Screenshot_1789795657.png) | ![Shikoku trait scores and temperament chips.](docs/screenshots/Screenshot_1789795653.png) |
+| Breed details — gallery | Offline state |
+| ![Shikoku gallery showing photo attribution and paging.](docs/screenshots/Screenshot_1789795649.png) | The dashboard exposes an offline banner while continuing to render the persisted breed cache. |
+
+## Development
 
 ```sh
-bundle install
+npm test
+npm run lint
 ```
 
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+The app currently targets the public `https://dogapi.dog/api/v2` endpoint and needs no secrets; `.env` is reserved for future configuration.
