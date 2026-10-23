@@ -6,9 +6,7 @@ import {
   FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react'
 
-// const baseQuery = fetchBaseQuery({
-//   baseUrl: Config.CAMPUS_API_URL,
-// })
+
 
 const baseQueryWithInterceptor: BaseQueryFn<
   string | FetchArgs,
@@ -23,16 +21,13 @@ const baseQueryWithInterceptor: BaseQueryFn<
     baseUrl: "https://dogapi.dog/api/v2",
   
     prepareHeaders: headers => {
-      // console.log('getState', (getState() as RootState).brand.user.token)
-      
-
+    
       return headers
     },
   })
   let result = await baseQuery(args, api, extraOptions)
   const uniqueLogId = Math.floor(Math.random() * 90000) + 10000 + ''
 
-  //console.debug('apiResult:', JSON.stringify(result, null, 2));
   if (result.error && result.error.status === 401) {
     console.warn('401 Status in API')
   }

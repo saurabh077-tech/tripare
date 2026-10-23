@@ -1,90 +1,98 @@
-import { api } from "../api"
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query'
+
+import { api } from "../api";
 import type {
   AllBreedsResult,
   Breed,
   BreedDetailResponse,
   BreedsListResponse,
   GroupsListResponse,
-} from "../../types/dog"
+} from "../../types/dog";
 
-export const PAGE_SIZE = 48
-export const FETCH_WINDOW = 2
+const PAGE_SIZE = 48;
 
-export const breedListUrl = (pageNumber = 1) =>
-  `/breeds?page[number]=${pageNumber}&page[size]=${PAGE_SIZE}`
+// Create API URLs
+const breedListUrl = (page = 1) =>
+  `/breeds?page[number]=${page}&page[size]=${PAGE_SIZE}`;
 
-export const breedDetailUrl = (id: string) => `/breeds/${id}`
+const breedDetailUrl = (id: string) => `/breeds/${id}`;
 
-export const groupsUrl = '/groups'
+const groupsUrl = "/groups";
 
-type FetchWithBQ = (url: string) => Promise<{
-  data?: unknown
-  error?: FetchBaseQueryError
-}>
+// Fetch all breeds, one page at a time
+async function fetchAllBreeds(fetchWithBQ: any) {
+  const allBreeds: Breed[] = [];
+  let page = 1;
+  let hasMore = true;
+  let partialError = false;
 
-export async function assembleAllBreeds(fetchWithBQ: FetchWithBQ) {
-  const merged: Breed[] = []
-  let partialError = false
+  while (hasMore) {
+    const result = await fetchWithBQ(breedListUrl(page));
 
-  const first = await fetchWithBQ(breedListUrl(1))
-  if (first.error) {
-    return { error: first.error }
-  }
-
-  const firstPage = first.data as BreedsListResponse
-  merged.push(...(firstPage.data ?? []))
-  const lastPage = firstPage.meta?.pagination?.last ?? 6
-
-  for (let start = 2; start <= lastPage; start += FETCH_WINDOW) {
-    const pages = Array.from(
-      { length: FETCH_WINDOW },
-      (_, index) => start + index,
-    ).filter(page => page <= lastPage)
-
-    const results = await Promise.all(
-      pages.map(page => fetchWithBQ(breedListUrl(page))),
-    )
-
-    for (const result of results) {
-      if (result.error) {
-        partialError = true
-        continue
+    if (result.error) {
+      if (page === 1) {
+        return { error: result.error };
       }
-      merged.push(...((result.data as BreedsListResponse).data ?? []))
+
+      partialError = true;
+      break;
+    }
+
+    const response = result.data as BreedsListResponse;
+
+    allBreeds.push(...(response.data ?? []));
+
+    const lastPage = response.meta?.pagination?.last ?? page;
+
+    if (page >= lastPage) {
+      hasMore = false;
+    } else {
+      page++;
     }
   }
 
-  const unique = new Map(merged.map(breed => [breed.id, breed]))
+  // Remove duplicate breeds using their IDs
+  const uniqueBreeds = Array.from(
+    new Map(allBreeds.map(breed => [breed.id, breed])).values()
+  );
+
   return {
     data: {
-      breeds: [...unique.values()],
+      breeds: uniqueBreeds,
       partialError,
     } satisfies AllBreedsResult,
-  }
+  };
 }
 
+// Define API endpoints
 export const getdogbreedsApi = api.injectEndpoints({
   endpoints: builder => ({
+    // Fetch one page of breeds
     getdogbreeds: builder.query<BreedsListResponse, number>({
-      query: (pageNumber = 1) => breedListUrl(pageNumber),
+      query: (page = 1) => breedListUrl(page),
     }),
+
+    // Fetch all pages of breeds
     getAlldogbreeds: builder.query<AllBreedsResult, void>({
       queryFn: (_arg, _api, _extraOptions, fetchWithBQ) =>
-        assembleAllBreeds(url => fetchWithBQ(url)),
+        fetchAllBreeds(fetchWithBQ),
     }),
+
+    // Fetch one breed by ID
     getdogbreed: builder.query<BreedDetailResponse, string>({
-      query: (id: string) => breedDetailUrl(id),
+      query: breedDetailUrl,
     }),
+
+    // Fetch all groups
     getdoggroups: builder.query<GroupsListResponse, void>({
       query: () => groupsUrl,
     }),
   }),
-})
+});
 
+// Export hooks
 export const {
   useGetdogbreedsQuery,
   useGetAlldogbreedsQuery,
   useGetdogbreedQuery,
   useGetdoggroupsQuery,
-} = getdogbreedsApi
+} = getdogbreedsApi;
